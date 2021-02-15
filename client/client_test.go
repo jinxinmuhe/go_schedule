@@ -11,8 +11,8 @@ import (
 func TestUpdateTask(t *testing.T) {
 	ctx := context.Background()
 	req := pb.UpdateTaskReq{
-		TaskId: "1234",
-		Name: "test",
+		TaskId: "1663dcf85c1742f0t1f25",
+		Name: "test_1",
 		ScheduleTime: "*/5 * * * * *",
 		KafkaTopic: "kafkatopic",
 		AlarmEmail: "xxx@qq.com",
@@ -20,5 +20,19 @@ func TestUpdateTask(t *testing.T) {
 	}
 	if _, err := UpdateTaskClient(ctx, &req, fmt.Sprintf("%s:12343", tool.IP)); err != nil {
 		t.Fatalf("update fail, error:%+v", err)
+	}
+}
+
+func TestCreateTask(t *testing.T) {
+	ctx := context.Background()
+	req := pb.CreateTaskReq{
+		TaskName: "test_5",
+		ScheduleTime: "*/5 * * * * *",
+		KafkaTopic: "kafkatopic",
+		AlarmEmail: "xxx@qq.com",
+		Owner: "jasonjinxin",
+	}
+	if _, err := CreateTaskClient(ctx, &req, fmt.Sprintf("%s:12343", tool.IP)); err != nil {
+		t.Fatalf("create fail, error:%+v", err)
 	}
 }
