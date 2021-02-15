@@ -142,7 +142,7 @@ func Start(ctx context.Context) {
 }
 
 func executeTask(ctx context.Context) {
-	now := time.Now()
+	now := time.Now().In(tool.TimeLocal)
 	for i, entry := range sd.Entries {
 		if entry.Next.Before(now) {
 			doExecute(ctx, entry.Task)
