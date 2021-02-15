@@ -7,10 +7,12 @@ import (
 
 	"go_schedule/client"
 	"go_schedule/dao/mongodb"
+	"go_schedule/dao/zookeeper"
 	"go_schedule/logic/consistent_hash"
 	"go_schedule/logic/schedule"
 	pb "go_schedule/task_management"
 	"go_schedule/util/config"
+	"go_schedule/util/consts"
 	"go_schedule/util/data_schema"
 	"go_schedule/util/log"
 	"go_schedule/util/tool"
@@ -22,6 +24,13 @@ import (
 // UpdateTask 创建任务
 func UpdateTask(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTaskResp, error) {
 	resp := pb.UpdateTaskResp{}
+	if isExists, err := zookeeper.ExistNode(consts.ZKLockPath); err != nil || isExists {
+		log.Errorf("initializing schedule entries")
+		resp.Code = pb.RespCode_FAIL
+		resp.Msg = "initializing schedule entries"
+		return &resp, err
+	}
+
 	// 若不是当前节点负责的task，则进行转发
 	if !schedule.TaskExists(req.GetTaskId()) {
 		return redirectUpdateReq(ctx, req)

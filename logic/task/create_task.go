@@ -8,10 +8,12 @@ import (
 
 	"go_schedule/client"
 	"go_schedule/dao/mongodb"
+	"go_schedule/dao/zookeeper"
 	"go_schedule/logic/consistent_hash"
 	"go_schedule/logic/schedule"
 	pb "go_schedule/task_management"
 	"go_schedule/util/config"
+	"go_schedule/util/consts"
 	"go_schedule/util/data_schema"
 	"go_schedule/util/log"
 	"go_schedule/util/tool"
@@ -22,6 +24,12 @@ import (
 // CreateTask 创建任务
 func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp, error) {
 	resp := pb.CreateTaskResp{}
+	if isExists, err := zookeeper.ExistNode(consts.ZKLockPath); err != nil || isExists {
+		log.Errorf("initializing schedule entries")
+		resp.Code = pb.RespCode_FAIL
+		resp.Msg = "initializing schedule entries"
+		return &resp, err
+	}
 	taskID := req.GetTaskId()
 	if taskID == "" {
 		taskID = fmt.Sprintf("%xt%x", time.Now().UnixNano(), rand.Int31n(8192))

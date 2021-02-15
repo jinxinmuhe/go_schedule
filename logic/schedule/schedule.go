@@ -11,6 +11,7 @@ import (
 	"go_schedule/logic/consistent_hash"
 	"go_schedule/logic/execute"
 	"go_schedule/util/config"
+	"go_schedule/util/consts"
 	"go_schedule/util/data_schema"
 	"go_schedule/util/log"
 	"go_schedule/util/tool"
@@ -41,11 +42,20 @@ func InitSchedule(ctx context.Context) error {
 }
 
 func doInitEntries(ctx context.Context) error {
-
+	_, err := zookeeper.CreateTemplateNode(consts.ZKLockPath, nil)
+	if err != nil && err != zk.ErrNodeExists {
+		log.Errorf("lock fail, error:%+v", err)
+		InitEntry()
+		return err
+	} 
+	if err == zk.ErrNodeExists {
+		defer zookeeper.DeleteNode(consts.ZKLockPath)
+	}
+	time.Sleep(500 * time.Millisecond)
 	consistent_hash.InitIPMd5List()
 	tasks, err := mongodb.SearchTask(ctx, bson.D{})
 	if err != nil {
-		log.Errorf("init schedule fail, %+v", err)
+		log.Errorf("search task fail, %+v", err)
 		InitEntry()
 		return err
 	}
