@@ -3,15 +3,11 @@ package consistent_hash
 import (
 	"crypto/md5"
 	"encoding/binary"
-	"fmt"
 	"go_schedule/dao/zookeeper"
 	"go_schedule/util/log"
 	"sort"
-	"strconv"
-	"sync"
 )
 
-var lock sync.Mutex
 var IPMd5 map[uint32]string
 
 // HashCalculation 计算节点或者task_id的哈希
@@ -27,8 +23,6 @@ func HashCalculation(key string) (uint32, error) {
 
 // SelectIP 选择一个节点
 func SelectIP(taskMD5 uint32) string {
-	lock.Lock()
-	defer lock.Unlock()
 	md5s := make([]uint32, 0, len(IPMd5))
 	for k := range IPMd5 {
 		md5s = append(md5s, k)
@@ -46,25 +40,20 @@ func SelectIP(taskMD5 uint32) string {
 }
 
 // InitIPMd5List 获取集群各节点的md5
-func InitIPMd5List() {
-	lock.Lock()
-	defer lock.Unlock()
-	IPMd5 = make(map[uint32]string)
+func InitIPMd5List() error {
+	IPMd5Temp := make(map[uint32]string)
 	basicPath := "/go_schedule/schedule"
 	list, err := zookeeper.ChildrenNodes(basicPath)
 	if err != nil {
 		log.Errorf("children nodes fail, error:%+v", err)
-		return
+		return err
 	}
+
 	for _, ip := range list {
-		path := fmt.Sprintf("%s/%s", basicPath, ip)
-		if md5, err := zookeeper.GetData(path); err != nil {
-			IPMd5 = make(map[uint32]string)
-			log.Errorf("get data from zk fail, path:%s, error:%+v", path, err)
-			return
-		} else {
-			md5int, _ := strconv.ParseUint(string(md5), 10, 32)
-			IPMd5[uint32(md5int)] = ip
+		if code, err := HashCalculation(ip); err == nil {
+			IPMd5Temp[code] = ip
 		}
 	}
+	IPMd5 = IPMd5Temp
+	return nil
 }

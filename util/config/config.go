@@ -1,10 +1,14 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"go_schedule/util/log"
+
+	"github.com/spf13/viper"
+)
 
 var Viper *viper.Viper
 
-func InitConfig(path string) {
+func InitConfig(path string) error {
 	Viper = viper.New()
 	if path == "" {
 		Viper.SetConfigFile("../../conf/app.toml")
@@ -12,6 +16,8 @@ func InitConfig(path string) {
 		Viper.SetConfigFile(path)
 	}
 	if err := Viper.ReadInConfig(); err != nil {
-		panic(err)
+		log.Errorf("init config error:%+v", err)
+		return err
 	}
+	return nil
 }

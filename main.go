@@ -8,6 +8,7 @@ import (
 
 	"go_schedule/dao/mongodb"
 	"go_schedule/dao/zookeeper"
+	"go_schedule/logic/consistent_hash"
 	"go_schedule/logic/schedule"
 	pb "go_schedule/task_management"
 	"go_schedule/util/config"
@@ -21,8 +22,10 @@ var configPath = flag.String("config", "./conf/app.toml", "配置文件地址")
 func main() {
 	flag.Parse()
 	log.Infof("start")
-	initServer(*configPath)
-	go schedule.Start(context.Background())
+	ctx := context.Background()
+	initServer(ctx, *configPath)
+	go schedule.Start(ctx)
+	schedule.InitEntry()
 
 	// 初始化grpc
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Viper.GetInt("port")))
@@ -36,9 +39,20 @@ func main() {
 	}
 }
 
-func initServer(path string) {
-	config.InitConfig(path)
-	mongodb.InitMongodb()
-	zookeeper.InitZookeeper()
-	schedule.InitSchedule()
+func initServer(ctx context.Context, path string) {
+	if err := config.InitConfig(path); err != nil {
+		panic(err)
+	}
+	if err := mongodb.InitMongodb(); err != nil {
+		panic(err)
+	}
+	if err := zookeeper.InitZookeeper(); err != nil {
+		panic(err)
+	}
+	if err := consistent_hash.InitIPMd5List(); err != nil {
+		panic(err)
+	}
+	if err := schedule.InitSchedule(ctx); err != nil {
+		panic(err)
+	}
 }

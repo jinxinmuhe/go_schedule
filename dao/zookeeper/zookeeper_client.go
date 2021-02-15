@@ -16,38 +16,46 @@ import (
 
 var zkConn *zk.Conn
 
-func InitZookeeper() {
+func InitZookeeper() error {
 	conn, _, err := zk.Connect(config.Viper.GetStringSlice("zookeeper.hosts"), config.Viper.GetDuration("zookeeper.timeout")*time.Second)
 	if err != nil {
-		panic(err)
+		log.Errorf("init zookeeper error:%+v", err)
+		return err
 	}
 	zkConn = conn
 	if exist, err := ExistNode("/go_schedule"); err != nil {
-		panic(err)
+		log.Errorf("init zookeeper error:%+v", err)
+		return err
 	} else if !exist {
 		if _, err := CreateNode("/go_schedule", nil); err != nil {
-			panic(err)
+			log.Errorf("init zookeeper error:%+v", err)
+			return err
 		}
 	}
 
 	if exist, err := ExistNode("/go_schedule/schedule"); err != nil {
-		panic(err)
+		log.Errorf("init zookeeper error:%+v", err)
+		return err
 	} else if !exist {
 		if _, err := CreateNode("/go_schedule/schedule", nil); err != nil {
-			panic(err)
+			log.Errorf("init zookeeper error:%+v", err)
+			return err
 		}
 	}
 
 	hash := md5.New()
 	if _, err := hash.Write([]byte(tool.IP)); err != nil {
-		panic(err)
+		log.Errorf("init zookeeper error:%+v", err)
+		return err
 	}
 	result := hash.Sum(nil)
 	m := binary.BigEndian.Uint32(result)
 	md5Str := strconv.FormatUint(uint64(m), 10)
 	if _, err := CreateTemplateNode(fmt.Sprintf("/go_schedule/schedule/%s", tool.IP), []byte(md5Str)); err != nil {
-		panic(err)
+		log.Errorf("init zookeeper error:%+v", err)
+		return err
 	}
+	return nil
 }
 
 // CreateTemplateNode 创建临时节点
@@ -174,4 +182,17 @@ func ChildrenNodes(path string) (list []string, err error) {
 		log.Errorf("get children node fail, path:%s, error:%+v", path, err)
 	}
 	return list, err
+}
+
+// ChildrenWatch 监听子节点变化
+func ChildrenWatch(path string) (list []string, wchann <-chan zk.Event, err error) {
+	for i := 0; i < 3; i++ {
+		if list, _, wchann, err = zkConn.ChildrenW(path); err == nil {
+			break
+		}
+	}
+	if err != nil {
+		log.Errorf("children watch fail, path:%s, error:%+v", path, err)
+	}
+	return
 }

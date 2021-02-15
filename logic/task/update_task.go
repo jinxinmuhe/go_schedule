@@ -21,12 +21,12 @@ import (
 
 // UpdateTask 创建任务
 func UpdateTask(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTaskResp, error) {
+	resp := pb.UpdateTaskResp{}
 	// 若不是当前节点负责的task，则进行转发
 	if !schedule.TaskExists(req.GetTaskId()) {
 		return redirectUpdateReq(ctx, req)
 	}
 
-	resp := pb.UpdateTaskResp{}
 	if isvalid, err := paramValidUpdate(ctx, req); !isvalid {
 		log.Errorf("parameters is invalid, request:%+v, error:%+v", *req, err)
 		resp.Code = pb.RespCode_FAIL

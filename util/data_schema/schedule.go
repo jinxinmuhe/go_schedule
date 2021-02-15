@@ -13,6 +13,7 @@ type Schedule struct {
 	Create  chan TaskInfo
 	Update  chan TaskInfo
 	Delete  chan TaskInfo
+	Init    chan int
 	Lock    sync.Mutex
 }
 

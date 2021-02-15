@@ -17,7 +17,7 @@ func init() {
 	config.InitConfig("")
 	mongodb.InitMongodb()
 	zookeeper.InitZookeeper()
-	schedule.InitSchedule()
+	schedule.InitSchedule(context.Background())
 	go schedule.Start(context.Background())
 }
 
@@ -36,8 +36,8 @@ func TestSearchTask(t *testing.T) {
 func TestCreateTask(t *testing.T) {
 	ctx := context.Background()
 	req := task_management.CreateTaskReq{
-		TaskName:     "test",
-		ScheduleTime: "*/2 * * * * *",
+		TaskName:     "test1",
+		ScheduleTime: "*/3 * * * * *",
 		KafkaTopic:   "kafka_topic",
 		AlarmEmail:   "xx@qq.com",
 		Owner:        "jasonjinxin",

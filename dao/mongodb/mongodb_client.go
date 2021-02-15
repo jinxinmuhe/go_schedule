@@ -18,7 +18,7 @@ import (
 var mongoClient *mongo.Client
 var db string
 
-func InitMongodb() {
+func InitMongodb() error {
 	clientSocket := config.Viper.GetString("mongodb.conn")
 	clientOptions := options.Client().ApplyURI(clientSocket)
 	clientOptions.SetConnectTimeout(config.Viper.GetDuration("mongodb.conn_timeout") * time.Second)
@@ -28,17 +28,18 @@ func InitMongodb() {
 	mongoClient, err = mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Errorf("mongodb connect fail, err:%+v, clienSocket:%s", err.Error(), clientSocket)
-		panic(err)
+		return err
 	}
 
 	// 检查连接
 	err = mongoClient.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Errorf("mongodb ping error, error:%+v", err.Error())
-		panic(err)
+		return err
 	}
 
 	db = config.Viper.GetString("mongodb.database")
+	return nil
 }
 
 // InsertOneTask 插入一条doc

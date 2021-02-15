@@ -7,22 +7,65 @@ import (
 	"time"
 
 	"go_schedule/dao/mongodb"
+	"go_schedule/dao/zookeeper"
+	"go_schedule/logic/consistent_hash"
 	"go_schedule/logic/execute"
 	"go_schedule/util/config"
 	"go_schedule/util/data_schema"
 	"go_schedule/util/log"
+	"go_schedule/util/tool"
 
+	"github.com/go-zookeeper/zk"
 	"github.com/robfig/cron"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var sd data_schema.Schedule
 
 // InitSchedule 初始化调度
-func InitSchedule() {
+func InitSchedule(ctx context.Context) error {
 	sd.Create = make(chan data_schema.TaskInfo, config.Viper.GetInt("schedule.create_size"))
 	sd.Update = make(chan data_schema.TaskInfo, config.Viper.GetInt("schedule.update_size"))
 	sd.Delete = make(chan data_schema.TaskInfo, config.Viper.GetInt("schedule.delete_size"))
+	sd.Init = make(chan int, 10)
 	sd.Entries = make([]data_schema.Entry, 0, 4)
+
+	// 监听集群节点变化
+	_, wchan, err := zookeeper.ChildrenWatch("/go_schedule/schedule")
+	if err != nil {
+		log.Errorf("wathch cluster node fail, error:%+v", err)
+		return err
+	}
+	go ClusterChange(ctx, wchan)
+	return nil
+}
+
+func doInitEntries(ctx context.Context) error {
+
+	consistent_hash.InitIPMd5List()
+	tasks, err := mongodb.SearchTask(ctx, bson.D{})
+	if err != nil {
+		log.Errorf("init schedule fail, %+v", err)
+		InitEntry()
+		return err
+	}
+	for i, t := range tasks {
+		taskMd5, err := consistent_hash.HashCalculation(t.TaskID)
+		if err != nil {
+			log.Errorf("task id hash calculation fail task_id:%s, error:%+v", t.TaskID, err)
+			InitEntry()
+			return err
+		}
+		if tool.IP == consistent_hash.SelectIP(taskMd5) && !TaskExists(t.TaskID) {
+			log.Infof("init entries, create index:%d, task:%+v", i, t)
+			CreateTask(t)
+		}
+		if tool.IP != consistent_hash.SelectIP(taskMd5) && TaskExists(t.TaskID) {
+			log.Infof("init entries, delete index:%d, task:%+v", i, t)
+			DeleteTask(t)
+		}
+	}
+	return nil
 }
 
 func LenCreateChan() int {
@@ -62,6 +105,10 @@ func DeleteTask(task data_schema.TaskInfo) {
 	sd.Delete <- task
 }
 
+func InitEntry() {
+	sd.Init <- 1
+}
+
 // Start 启动调度
 func Start(ctx context.Context) {
 	for {
@@ -80,6 +127,8 @@ func Start(ctx context.Context) {
 			doDelete(ctx, task)
 		case task := <-sd.Update:
 			doUpdate(ctx, task)
+		case <-sd.Init:
+			doInitEntries(ctx)
 		}
 	}
 }
@@ -147,6 +196,7 @@ func doUpdate(ctx context.Context, task data_schema.TaskInfo) error {
 			sd.Entries[i].Task = task
 		}
 	}
+	log.Errorf("[doUpdate]cannt find the task:%+v", task)
 	return fmt.Errorf("cannt find the task")
 }
 
@@ -158,6 +208,7 @@ func doDelete(ctx context.Context, task data_schema.TaskInfo) error {
 		}
 	}
 	if index == -1 {
+		log.Errorf("[doDelete]cannt find the task:%+v", task)
 		return fmt.Errorf("cannt find the task")
 	}
 	ScheLock()
@@ -172,4 +223,18 @@ func ScheLock() {
 
 func ScheUnLock() {
 	sd.Lock.Unlock()
+}
+
+// ClusterChange 集群变化处理
+func ClusterChange(ctx context.Context, c <-chan zk.Event) {
+	select {
+	case <-c:
+		_, wchan, err := zookeeper.ChildrenWatch("/go_schedule/schedule")
+		if err != nil {
+			log.Errorf("wathch cluster node fail, error:%+v", err)
+		} else {
+			go ClusterChange(ctx, wchan)
+		}
+		InitEntry()
+	}
 }

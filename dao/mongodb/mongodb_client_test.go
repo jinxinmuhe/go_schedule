@@ -50,7 +50,7 @@ func TestUpdateOneTask(t *testing.T) {
 func TestSearchTasks(t *testing.T) {
 	ctx := context.Background()
 	filterCases := []bson.D{
-		{{"task_id", 1234}},
+		{},
 	}
 
 	if tasks, err := SearchTask(ctx, filterCases[0]); err != nil {

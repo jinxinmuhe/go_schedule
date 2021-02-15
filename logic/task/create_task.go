@@ -28,6 +28,12 @@ func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp,
 		req.TaskId = taskID
 	}
 	goalIP, err := selectIP(taskID)
+	if goalIP == "" {
+		log.Errorf("create task, goal ip is empty, task:%+v", *req)
+		resp.Code = pb.RespCode_FAIL
+		resp.Msg = "inner error"
+		return &resp, err
+	}
 	if goalIP != tool.IP {
 		// 转发任务创建
 		return client.CreateTaskClient(ctx, req, fmt.Sprintf("%s:%d", goalIP, config.Viper.GetInt("port")))

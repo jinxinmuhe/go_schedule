@@ -19,11 +19,11 @@ import (
 
 // DeleteTask 创建任务
 func DeleteTask(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTaskResp, error) {
+	resp := pb.DeleteTaskResp{}
 	// 若不是当前节点负责的task，则进行转发
 	if !schedule.TaskExists(req.GetTaskId()) {
 		return redirectDeleteReq(ctx, req)
 	}
-	resp := pb.DeleteTaskResp{}
 	task := data_schema.TaskInfo{
 		TaskID: req.GetTaskId(),
 	}
