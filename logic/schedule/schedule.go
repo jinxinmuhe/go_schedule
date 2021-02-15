@@ -177,7 +177,7 @@ func doExecute(ctx context.Context, task data_schema.TaskInfo) {
 func doCreate(ctx context.Context, task data_schema.TaskInfo) {
 	s, err := cron.Parse(task.CronInfo)
 	if err != nil {
-		log.ErrLogger.Printf("parse task cron info fail, taskID:%d, cronInfo:%s, error:%+v", task.TaskID, task.CronInfo, err)
+		log.ErrLogger.Printf("parse task cron info fail, taskID:%s, cronInfo:%s, error:%+v", task.TaskID, task.CronInfo, err)
 		return
 	}
 	e := data_schema.Entry{

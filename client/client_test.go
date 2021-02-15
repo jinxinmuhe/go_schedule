@@ -11,8 +11,8 @@ import (
 func TestUpdateTask(t *testing.T) {
 	ctx := context.Background()
 	req := pb.UpdateTaskReq{
-		TaskId: "1663dcf85c1742f0t1f25",
-		Name: "test_1",
+		TaskId: "1663dde0767d9138t92e",
+		Name: "test_4",
 		ScheduleTime: "*/5 * * * * *",
 		KafkaTopic: "kafkatopic",
 		AlarmEmail: "xxx@qq.com",
@@ -26,7 +26,7 @@ func TestUpdateTask(t *testing.T) {
 func TestCreateTask(t *testing.T) {
 	ctx := context.Background()
 	req := pb.CreateTaskReq{
-		TaskName: "test_5",
+		TaskName: "test_6",
 		ScheduleTime: "*/5 * * * * *",
 		KafkaTopic: "kafkatopic",
 		AlarmEmail: "xxx@qq.com",
