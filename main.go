@@ -21,7 +21,7 @@ var configPath = flag.String("config", "./conf/app.toml", "配置文件地址")
 
 func main() {
 	flag.Parse()
-	log.Infof("start")
+	log.InfoLogger.Printf("start")
 	ctx := context.Background()
 	initServer(ctx, *configPath)
 	go schedule.Start(ctx)
@@ -30,12 +30,12 @@ func main() {
 	// 初始化grpc
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Viper.GetInt("port")))
 	if err != nil {
-		log.Errorf("failed to listen: %v", err)
+		log.ErrLogger.Printf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterTaskManagementServer(s, &taskServer{})
 	if err := s.Serve(lis); err != nil {
-		log.Errorf("failed to serve: %v", err)
+		log.ErrLogger.Printf("failed to serve: %v", err)
 	}
 }
 

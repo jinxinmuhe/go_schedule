@@ -15,28 +15,28 @@ type taskServer struct {
 
 func (s *taskServer) CreateTask(ctx context.Context, in *pb.CreateTaskReq) (*pb.CreateTaskResp, error) {
 	if in == nil {
-		log.Errorf("create task request is nil")
+		log.ErrLogger.Printf("create task request is nil")
 		return nil, fmt.Errorf("request is nil")
 	}
-	log.Infof("CreateTask Req: %v", *in)
+	log.InfoLogger.Printf("CreateTask Req: %v", *in)
 	return task.CreateTask(ctx, in)
 }
 
 func (s *taskServer) UpdateTask(ctx context.Context, in *pb.UpdateTaskReq) (*pb.UpdateTaskResp, error) {
 	if in == nil {
-		log.Errorf("update task request is nil")
+		log.ErrLogger.Printf("update task request is nil")
 		return nil, fmt.Errorf("request is nil")
 	}
-	log.Infof("UpdateTask Req: %v", *in)
+	log.InfoLogger.Printf("UpdateTask Req: %v", *in)
 	return task.UpdateTask(ctx, in)
 }
 
 func (s *taskServer) DeleteTask(ctx context.Context, in *pb.DeleteTaskReq) (*pb.DeleteTaskResp, error) {
 	if in == nil {
-		log.Errorf("delete task request is nil")
+		log.ErrLogger.Printf("delete task request is nil")
 		return nil, fmt.Errorf("request is nil")
 	}
-	log.Infof("DeleteTask Req: %v", *in)
+	log.InfoLogger.Printf("DeleteTask Req: %v", *in)
 	return task.DeleteTask(ctx, in)
 }
 

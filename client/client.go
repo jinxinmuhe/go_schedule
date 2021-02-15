@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-
 	"time"
 
 	pb "go_schedule/task_management"
@@ -21,7 +20,7 @@ func CreateTaskClient(ctx context.Context, req *pb.CreateTaskReq, address string
 	resp := pb.CreateTaskResp{}
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Errorf("connect to %s fail, error:%+v", address, err)
+		log.ErrLogger.Printf("connect to %s fail, error:%+v", address, err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "connect fail"
 		return &resp, err
@@ -33,7 +32,7 @@ func CreateTaskClient(ctx context.Context, req *pb.CreateTaskReq, address string
 	defer cancel()
 	r, err := c.CreateTask(ctx, req)
 	if err != nil {
-		log.Errorf("request %s for creating task fail, error:%+v", address, err)
+		log.ErrLogger.Printf("request %s for creating task fail, error:%+v", address, err)
 	}
 	return r, err
 }
@@ -43,7 +42,7 @@ func UpdateTaskClient(ctx context.Context, req *pb.UpdateTaskReq, address string
 	resp := pb.UpdateTaskResp{}
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Errorf("connect to %s fail, error:%+v", address, err)
+		log.ErrLogger.Printf("connect to %s fail, error:%+v", address, err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "connect fail"
 		return &resp, err
@@ -55,7 +54,7 @@ func UpdateTaskClient(ctx context.Context, req *pb.UpdateTaskReq, address string
 	defer cancel()
 	r, err := c.UpdateTask(ctx, req)
 	if err != nil {
-		log.Errorf("request %s for updating task fail, error:%+v", address, err)
+		log.ErrLogger.Printf("request %s for updating task fail, error:%+v", address, err)
 	}
 	return r, err
 }
@@ -65,7 +64,7 @@ func DeleteTaskClient(ctx context.Context, req *pb.DeleteTaskReq, address string
 	resp := pb.DeleteTaskResp{}
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Errorf("connect to %s fail, error:%+v", address, err)
+		log.ErrLogger.Printf("connect to %s fail, error:%+v", address, err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "connect fail"
 		return &resp, err
@@ -77,7 +76,7 @@ func DeleteTaskClient(ctx context.Context, req *pb.DeleteTaskReq, address string
 	defer cancel()
 	r, err := c.DeleteTask(ctx, req)
 	if err != nil {
-		log.Errorf("request %s for deleting task fail, error:%+v", address, err)
+		log.ErrLogger.Printf("request %s for deleting task fail, error:%+v", address, err)
 	}
 	return r, err
 }

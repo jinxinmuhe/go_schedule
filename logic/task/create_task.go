@@ -25,7 +25,7 @@ import (
 func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp, error) {
 	resp := pb.CreateTaskResp{}
 	if list, err := zookeeper.ChildrenNodes(consts.ZKLockPath); err != nil || len(list) > 0 {
-		log.Errorf("initializing schedule entries")
+		log.ErrLogger.Printf("initializing schedule entries")
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "initializing schedule entries"
 		return &resp, err
@@ -37,7 +37,7 @@ func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp,
 	}
 	goalIP, err := selectIP(taskID)
 	if goalIP == "" {
-		log.Errorf("create task, goal ip is empty, task:%+v", *req)
+		log.ErrLogger.Printf("create task, goal ip is empty, task:%+v", *req)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "inner error"
 		return &resp, err
@@ -49,7 +49,7 @@ func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp,
 
 	// 参数及内存环境校验，防止内存任务创建失败
 	if isvalid, err := paramValid(ctx, req); !isvalid {
-		log.Errorf("parameters is invalid, task:%+v, error:%+v", *req, err)
+		log.ErrLogger.Printf("parameters is invalid, task:%+v, error:%+v", *req, err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "parameter is invalid"
 		return &resp, err
@@ -57,7 +57,7 @@ func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp,
 	schedule.ScheLock()
 	defer schedule.ScheUnLock()
 	if schedule.LenCreateChan() >= config.Viper.GetInt("schedule.create_size") {
-		log.Errorf("create task too frequency")
+		log.ErrLogger.Printf("create task too frequency")
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "parameter is invalid"
 		return &resp, fmt.Errorf("create task too frequency")
@@ -77,17 +77,17 @@ func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp,
 	// 写mongodb
 	id, err := mongodb.InsertOneTask(ctx, task)
 	if err != nil {
-		log.Errorf("create task fail, write mongodb fail, task:%+v, error:%+v", task, err)
+		log.ErrLogger.Printf("create task fail, write mongodb fail, task:%+v, error:%+v", task, err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "write mongodb fail"
 		return &resp, err
 	}
-	log.Infof("write mongodb succ, taskID:%s, mongoID:%s", task.TaskID, id)
+	log.InfoLogger.Printf("write mongodb succ, taskID:%s, mongoID:%s", task.TaskID, id)
 
 	// 写zookeeper
 	// pathTask := fmt.Sprintf("/go_schedule/task/%s", task.TaskID)
 	// zookeeper.CreateTemplateNode(pathTask, []byte(tool.IP))
-	// log.Infof("write zk succ, taskID: %s", task.TaskID)
+	// log.InfoLogger.Printf("write zk succ, taskID: %s", task.TaskID)
 
 	// 写内存
 	schedule.CreateTask(task)
@@ -99,23 +99,23 @@ func CreateTask(ctx context.Context, req *pb.CreateTaskReq) (*pb.CreateTaskResp,
 // func writeZk(taskID string) error {
 // 	pathIPParent := fmt.Sprintf("/go_schedule/schedule/%s", tool.IP)
 // 	if exist, err := zookeeper.ExistNode(pathIPParent); err != nil {
-// 		log.Errorf("cannt judge zk node is exist, path:%s, error:%+v", pathIPParent, err)
+// 		log.ErrLogger.Printf("cannt judge zk node is exist, path:%s, error:%+v", pathIPParent, err)
 // 		return err
 // 	} else if !exist {
 // 		if _, err := zookeeper.CreateNode(pathIPParent, nil); err != nil {
-// 			log.Errorf("cannt create parent zk node, path:%s, error:%+v", pathIPParent, err)
+// 			log.ErrLogger.Printf("cannt create parent zk node, path:%s, error:%+v", pathIPParent, err)
 // 			return err
 // 		}
 // 	}
 
 // 	pathIP := fmt.Sprintf("/go_schedule/schedule/%s/%s", tool.IP, taskID)
 // 	if _, err := zookeeper.CreateNode(pathIP, []byte(taskID)); err != nil {
-// 		log.Errorf("create task fail, write zk fail, path:%s, data:%s, error:%s", pathIP, taskID, err.Error())
+// 		log.ErrLogger.Printf("create task fail, write zk fail, path:%s, data:%s, error:%s", pathIP, taskID, err.Error())
 // 		return err
 // 	}
 // 	pathTask := fmt.Sprintf("/go_schedule/task/%s", taskID)
 // 	if _, err := zookeeper.CreateNode(pathTask, []byte(tool.IP)); err != nil {
-// 		log.Errorf("create task fail, write zk fail, path:%s, data:%s, error:%s", pathTask, tool.IP, err.Error())
+// 		log.ErrLogger.Printf("create task fail, write zk fail, path:%s, data:%s, error:%s", pathTask, tool.IP, err.Error())
 // 		return err
 // 	}
 // 	return nil
@@ -128,7 +128,7 @@ func paramValid(ctx context.Context, req *pb.CreateTaskReq) (bool, error) {
 
 	_, err := cron.Parse(req.ScheduleTime)
 	if err != nil {
-		log.Errorf("schedule time is illegal, taskInfo:%+v, error:%+v", *req, err)
+		log.ErrLogger.Printf("schedule time is illegal, taskInfo:%+v, error:%+v", *req, err)
 		return false, err
 	}
 
@@ -138,12 +138,12 @@ func paramValid(ctx context.Context, req *pb.CreateTaskReq) (bool, error) {
 func selectIP(taskID string) (ip string, err error) {
 	taskMd5, err := consistent_hash.HashCalculation(taskID)
 	if err != nil {
-		log.Errorf("create task, calculate taskID:%s md5 fail, error:%+v", taskID, err)
+		log.ErrLogger.Printf("create task, calculate taskID:%s md5 fail, error:%+v", taskID, err)
 		return "", err
 	}
 	ip = consistent_hash.SelectIP(taskMd5)
 	if ip == "" {
-		log.Errorf("create task:%s, the found ip is empty", taskID)
+		log.ErrLogger.Printf("create task:%s, the found ip is empty", taskID)
 		return "", fmt.Errorf("ip is empty")
 	}
 	return ip, nil

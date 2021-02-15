@@ -37,7 +37,7 @@ func SearchTask(ctx context.Context, in *pb.SearchTaskReq) (*pb.SearchTaskResp, 
 	if err != nil {
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "inner error"
-		log.Errorf("search task fail, error:%+v, conditions:%+v", err, conditions)
+		log.ErrLogger.Printf("search task fail, error:%+v, conditions:%+v", err, conditions)
 		return &resp, err
 	}
 

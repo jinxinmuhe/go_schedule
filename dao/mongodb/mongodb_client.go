@@ -27,14 +27,14 @@ func InitMongodb() error {
 	// 连接到MongoDB
 	mongoClient, err = mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		log.Errorf("mongodb connect fail, err:%+v, clienSocket:%s", err.Error(), clientSocket)
+		log.ErrLogger.Printf("mongodb connect fail, err:%+v, clienSocket:%s", err.Error(), clientSocket)
 		return err
 	}
 
 	// 检查连接
 	err = mongoClient.Ping(context.TODO(), nil)
 	if err != nil {
-		log.Errorf("mongodb ping error, error:%+v", err.Error())
+		log.ErrLogger.Printf("mongodb ping error, error:%+v", err.Error())
 		return err
 	}
 
@@ -46,7 +46,7 @@ func InitMongodb() error {
 func InsertOneTask(ctx context.Context, task data_schema.TaskInfo) (id primitive.ObjectID, err error) {
 	collection := mongoClient.Database(db).Collection("task")
 	if collection == nil {
-		log.Errorf("db.runoob.task is nil")
+		log.ErrLogger.Printf("db.runoob.task is nil")
 		return primitive.ObjectID{}, fmt.Errorf("collection is nil")
 	}
 	var result *mongo.InsertOneResult
@@ -58,7 +58,7 @@ func InsertOneTask(ctx context.Context, task data_schema.TaskInfo) (id primitive
 	}
 
 	if i >= 3 {
-		log.Errorf("insert task into mongo fail, task:%+v, error:%+v", task, err)
+		log.ErrLogger.Printf("insert task into mongo fail, task:%+v, error:%+v", task, err)
 		return primitive.ObjectID{}, err
 	}
 	id = result.InsertedID.(primitive.ObjectID)
@@ -69,7 +69,7 @@ func InsertOneTask(ctx context.Context, task data_schema.TaskInfo) (id primitive
 func UpdateOneTask(ctx context.Context, filter bson.D, update bson.D) (result *mongo.UpdateResult, err error) {
 	collection := mongoClient.Database(db).Collection("task")
 	if collection == nil {
-		log.Errorf("db.runoob.task is nil")
+		log.ErrLogger.Printf("db.runoob.task is nil")
 		return nil, fmt.Errorf("collection is nil")
 	}
 
@@ -81,7 +81,7 @@ func UpdateOneTask(ctx context.Context, filter bson.D, update bson.D) (result *m
 	}
 
 	if i >= 3 {
-		log.Errorf("insert task into mongo fail, filter:%+v, task:%+v, error:%+v", filter, update, err)
+		log.ErrLogger.Printf("insert task into mongo fail, filter:%+v, task:%+v, error:%+v", filter, update, err)
 		return nil, err
 	}
 	return result, err
@@ -91,7 +91,7 @@ func UpdateOneTask(ctx context.Context, filter bson.D, update bson.D) (result *m
 func DeleteTask(ctx context.Context, filter bson.D) (result *mongo.DeleteResult, err error) {
 	collection := mongoClient.Database(db).Collection("task")
 	if collection == nil {
-		log.Errorf("db.runoob.task is nil")
+		log.ErrLogger.Printf("db.runoob.task is nil")
 		return nil, fmt.Errorf("collection is nil")
 	}
 	for i := 0; i < 3; i++ {
@@ -100,7 +100,7 @@ func DeleteTask(ctx context.Context, filter bson.D) (result *mongo.DeleteResult,
 		}
 	}
 	if err != nil {
-		log.Errorf("delete task from mongodb fail, filter:%+v, error:%+v", filter, err)
+		log.ErrLogger.Printf("delete task from mongodb fail, filter:%+v, error:%+v", filter, err)
 	}
 	return result, err
 }
@@ -109,18 +109,18 @@ func DeleteTask(ctx context.Context, filter bson.D) (result *mongo.DeleteResult,
 func SearchTask(ctx context.Context, filter bson.D) (tasks []data_schema.TaskInfo, err error) {
 	collection := mongoClient.Database(db).Collection("task")
 	if collection == nil {
-		log.Errorf("db.runoob.task is nil")
+		log.ErrLogger.Printf("db.runoob.task is nil")
 		return nil, fmt.Errorf("collection is nil")
 	}
 
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
-		log.Errorf("mongodb find task fail, filter:%+v, error:%+v", filter, err)
+		log.ErrLogger.Printf("mongodb find task fail, filter:%+v, error:%+v", filter, err)
 		return nil, err
 	}
 	tasks = make([]data_schema.TaskInfo, cursor.RemainingBatchLength())
 	if err = cursor.All(ctx, &tasks); err != nil {
-		log.Errorf("mongodb all function fail, filter:%+v, error:%+v", filter, err)
+		log.ErrLogger.Printf("mongodb all function fail, filter:%+v, error:%+v", filter, err)
 		return nil, err
 	}
 	return tasks, nil
@@ -130,7 +130,7 @@ func SearchTask(ctx context.Context, filter bson.D) (tasks []data_schema.TaskInf
 func InsertOneSchedule(ctx context.Context, schedule data_schema.ScheduleHistory) (id string, err error) {
 	collection := mongoClient.Database(db).Collection("schedule")
 	if collection == nil {
-		log.Errorf("db.runoob.schedule is nil")
+		log.ErrLogger.Printf("db.runoob.schedule is nil")
 		return "", fmt.Errorf("collection is nil")
 	}
 	var result *mongo.InsertOneResult
@@ -142,7 +142,7 @@ func InsertOneSchedule(ctx context.Context, schedule data_schema.ScheduleHistory
 	}
 
 	if i >= 3 {
-		log.Errorf("insert schedule into mongo fail, schedule:%+v, error:%+v", schedule, err)
+		log.ErrLogger.Printf("insert schedule into mongo fail, schedule:%+v, error:%+v", schedule, err)
 		return "", err
 	}
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil

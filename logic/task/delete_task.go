@@ -23,7 +23,7 @@ import (
 func DeleteTask(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTaskResp, error) {
 	resp := pb.DeleteTaskResp{}
 	if list, err := zookeeper.ChildrenNodes(consts.ZKLockPath); err != nil || len(list) > 0 {
-		log.Errorf("initializing schedule entries")
+		log.ErrLogger.Printf("initializing schedule entries")
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "initializing schedule entries"
 		return &resp, err
@@ -39,7 +39,7 @@ func DeleteTask(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTaskResp,
 	schedule.ScheLock()
 	defer schedule.ScheUnLock()
 	if schedule.LenDeleteChan() >= config.Viper.GetInt("schedule.delete_size") {
-		log.Errorf("delete task too frequency")
+		log.ErrLogger.Printf("delete task too frequency")
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = fmt.Sprintf("delete task too frequency")
 		return &resp, fmt.Errorf("delete task too frequency")
@@ -50,7 +50,7 @@ func DeleteTask(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTaskResp,
 		{"task_id", req.GetTaskId()},
 	}
 	if _, err := mongodb.DeleteTask(ctx, filter); err != nil {
-		log.Errorf("delete task from mongodb fail, error:%v, filter:%+v", err, filter)
+		log.ErrLogger.Printf("delete task from mongodb fail, error:%v, filter:%+v", err, filter)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = fmt.Sprintf("delete task from mongodb fail")
 		return &resp, fmt.Errorf("delete task from mongodb fail")
@@ -69,12 +69,12 @@ func DeleteTask(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTaskResp,
 // func deleteZkNode(taskID string) {
 // 	pathIP := fmt.Sprintf("/go_schedule/schedule/%s/%s", tool.IP, taskID)
 // 	if err := zookeeper.DeleteNode(pathIP); err != nil {
-// 		log.Errorf("delete node fail, path:%s, error:%+v", pathIP, err)
+// 		log.ErrLogger.Printf("delete node fail, path:%s, error:%+v", pathIP, err)
 // 		return err
 // 	}
 // 	pathTask := fmt.Sprintf("/go_schedule/task/%s", taskID)
 // 	if err := zookeeper.DeleteNode(pathTask); err != nil {
-// 		log.Errorf("delete node fail, path:%s, error:%+v", pathTask, err)
+// 		log.ErrLogger.Printf("delete node fail, path:%s, error:%+v", pathTask, err)
 // 		return err
 // 	}
 // 	return nil
@@ -87,7 +87,7 @@ func redirectDeleteReq(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTa
 	// path := fmt.Sprintf("/go_schedule/task/%s", req.GetTaskId())
 	// ipByte, err := zookeeper.GetData(path)
 	// if err != nil {
-	// 	log.Errorf("delete task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
+	// 	log.ErrLogger.Printf("delete task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
 	// 	resp.Code = pb.RespCode_FAIL
 	// 	resp.Msg = "delete task fail"
 	// 	return &resp, err
@@ -95,20 +95,20 @@ func redirectDeleteReq(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTa
 
 	taskMd5, err := consistent_hash.HashCalculation(req.GetTaskId())
 	if err != nil {
-		log.Errorf("delete task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
+		log.ErrLogger.Printf("delete task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "delete task fail"
 		return &resp, err
 	}
 	ip := consistent_hash.SelectIP(taskMd5)
 	if ip == "" {
-		log.Errorf("delete task %s fail, the found ip is empty", req.GetTaskId())
+		log.ErrLogger.Printf("delete task %s fail, the found ip is empty", req.GetTaskId())
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "delete task fail"
 		return &resp, fmt.Errorf("ip is empty")
 	}
 	if ip == tool.IP {
-		log.Errorf("delete task %s fail, the ip registered in zk is same with current node", req.GetTaskId())
+		log.ErrLogger.Printf("delete task %s fail, the ip registered in zk is same with current node", req.GetTaskId())
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "delete task fail"
 		return &resp, err

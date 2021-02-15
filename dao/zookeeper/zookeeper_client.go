@@ -20,50 +20,50 @@ var zkConn *zk.Conn
 func InitZookeeper() error {
 	conn, _, err := zk.Connect(config.Viper.GetStringSlice("zookeeper.hosts"), config.Viper.GetDuration("zookeeper.timeout")*time.Second)
 	if err != nil {
-		log.Errorf("init zookeeper error:%+v", err)
+		log.ErrLogger.Printf("init zookeeper error:%+v", err)
 		return err
 	}
 	zkConn = conn
 	if exist, err := ExistNode("/go_schedule"); err != nil {
-		log.Errorf("init zookeeper error:%+v", err)
+		log.ErrLogger.Printf("init zookeeper error:%+v", err)
 		return err
 	} else if !exist {
 		if _, err := CreateNode("/go_schedule", nil); err != nil {
-			log.Errorf("init zookeeper error:%+v", err)
+			log.ErrLogger.Printf("init zookeeper error:%+v", err)
 			return err
 		}
 	}
 
 	if exist, err := ExistNode(consts.ZKLockPath); err != nil {
-		log.Errorf("init zookeeper error:%+v", err)
+		log.ErrLogger.Printf("init zookeeper error:%+v", err)
 		return err
 	} else if !exist {
 		if _, err := CreateNode(consts.ZKLockPath, nil); err != nil {
-			log.Errorf("init zookeeper error:%+v", err)
+			log.ErrLogger.Printf("init zookeeper error:%+v", err)
 			return err
 		}
 	}
 
 	if exist, err := ExistNode("/go_schedule/schedule"); err != nil {
-		log.Errorf("init zookeeper error:%+v", err)
+		log.ErrLogger.Printf("init zookeeper error:%+v", err)
 		return err
 	} else if !exist {
 		if _, err := CreateNode("/go_schedule/schedule", nil); err != nil {
-			log.Errorf("init zookeeper error:%+v", err)
+			log.ErrLogger.Printf("init zookeeper error:%+v", err)
 			return err
 		}
 	}
 
 	hash := md5.New()
 	if _, err := hash.Write([]byte(tool.IP)); err != nil {
-		log.Errorf("init zookeeper error:%+v", err)
+		log.ErrLogger.Printf("init zookeeper error:%+v", err)
 		return err
 	}
 	result := hash.Sum(nil)
 	m := binary.BigEndian.Uint32(result)
 	md5Str := strconv.FormatUint(uint64(m), 10)
 	if _, err := CreateTemplateNode(fmt.Sprintf("/go_schedule/schedule/%s", tool.IP), []byte(md5Str)); err != nil {
-		log.Errorf("init zookeeper error:%+v", err)
+		log.ErrLogger.Printf("init zookeeper error:%+v", err)
 		return err
 	}
 	return nil
@@ -77,7 +77,7 @@ func CreateTemplateNode(path string, data []byte) (result string, err error) {
 		}
 	}
 	if err != nil {
-		log.Errorf("create template node fail, path:%s, data:%s, error:%+v", path, string(data), err)
+		log.ErrLogger.Printf("create template node fail, path:%s, data:%s, error:%+v", path, string(data), err)
 		return "", err
 	}
 	return result, nil
@@ -87,7 +87,7 @@ func CreateTemplateNode(path string, data []byte) (result string, err error) {
 func CreateSequenceNode(path string, data []byte) (string, error) {
 	result, err := zkConn.Create(path, data, zk.FlagSequence, nil)
 	if err != nil {
-		log.Errorf("create sequence node fail, path:%s, data:%s, error:%+v", path, string(data), err)
+		log.ErrLogger.Printf("create sequence node fail, path:%s, data:%s, error:%+v", path, string(data), err)
 		return "", err
 	}
 	return result, nil
@@ -97,7 +97,7 @@ func CreateSequenceNode(path string, data []byte) (string, error) {
 func CreateSeqTempNode(path string, data []byte) (string, error) {
 	result, err := zkConn.Create(path, data, zk.FlagSequence|zk.FlagEphemeral, nil)
 	if err != nil {
-		log.Errorf("create sequence template node fail, path:%s, data:%s, error:%+v", path, string(data), err)
+		log.ErrLogger.Printf("create sequence template node fail, path:%s, data:%s, error:%+v", path, string(data), err)
 		return "", err
 	}
 	return result, nil
@@ -114,7 +114,7 @@ func CreateNode(path string, data []byte) (string, error) {
 		}
 	}
 	if i >= 3 {
-		log.Errorf("create node fail, path:%s, data:%s, error:%+v", path, string(data), err)
+		log.ErrLogger.Printf("create node fail, path:%s, data:%s, error:%+v", path, string(data), err)
 		return "", err
 	}
 	return result, nil
@@ -131,11 +131,11 @@ func SetData(path string, data []byte, version int32) error {
 	}
 
 	if err != nil {
-		log.Errorf("set data to zk fail, error:%+v, path:%s, data:%s, version:%d", err, path, data, version)
+		log.ErrLogger.Printf("set data to zk fail, error:%+v, path:%s, data:%s, version:%d", err, path, data, version)
 		return err
 	}
 
-	log.Infof("set data status:%+v", *stat)
+	log.InfoLogger.Printf("set data status:%+v", *stat)
 	return nil
 }
 
@@ -150,7 +150,7 @@ func GetData(path string) ([]byte, error) {
 	}
 
 	if err != nil {
-		log.Errorf("get data from zk fail, error:%+v, path:%s", err, path)
+		log.ErrLogger.Printf("get data from zk fail, error:%+v, path:%s", err, path)
 		return nil, err
 	}
 	return data, nil
@@ -164,7 +164,7 @@ func DeleteNode(path string) (err error) {
 		}
 	}
 	if err != nil {
-		log.Errorf("delete zk node fail, error:%+v", err)
+		log.ErrLogger.Printf("delete zk node fail, error:%+v", err)
 	}
 	return err
 }
@@ -177,7 +177,7 @@ func ExistNode(path string) (exist bool, err error) {
 		}
 	}
 	if err != nil {
-		log.Errorf("request zk exist fail, path:%s, error:%+v", path, err)
+		log.ErrLogger.Printf("request zk exist fail, path:%s, error:%+v", path, err)
 	}
 	return exist, err
 }
@@ -190,7 +190,7 @@ func ChildrenNodes(path string) (list []string, err error) {
 		}
 	}
 	if err != nil {
-		log.Errorf("get children node fail, path:%s, error:%+v", path, err)
+		log.ErrLogger.Printf("get children node fail, path:%s, error:%+v", path, err)
 	}
 	return list, err
 }
@@ -203,7 +203,7 @@ func ChildrenWatch(path string) (list []string, wchann <-chan zk.Event, err erro
 		}
 	}
 	if err != nil {
-		log.Errorf("children watch fail, path:%s, error:%+v", path, err)
+		log.ErrLogger.Printf("children watch fail, path:%s, error:%+v", path, err)
 	}
 	return
 }

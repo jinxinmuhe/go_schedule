@@ -16,7 +16,7 @@ func InitConfig(path string) error {
 		Viper.SetConfigFile(path)
 	}
 	if err := Viper.ReadInConfig(); err != nil {
-		log.Errorf("init config error:%+v", err)
+		log.ErrLogger.Printf("init config error:%+v", err)
 		return err
 	}
 	return nil

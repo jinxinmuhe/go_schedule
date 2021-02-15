@@ -34,7 +34,7 @@ func InitSchedule(ctx context.Context) error {
 	// 监听集群节点变化
 	_, wchan, err := zookeeper.ChildrenWatch("/go_schedule/schedule")
 	if err != nil {
-		log.Errorf("wathch cluster node fail, error:%+v", err)
+		log.ErrLogger.Printf("wathch cluster node fail, error:%+v", err)
 		return err
 	}
 	go ClusterChange(ctx, wchan)
@@ -44,32 +44,32 @@ func InitSchedule(ctx context.Context) error {
 func doInitEntries(ctx context.Context) error {
 	lockPath := fmt.Sprintf("%s/%s", consts.ZKLockPath, tool.IP)
 	if _, err := zookeeper.CreateTemplateNode(lockPath, nil); err != nil {
-		log.Errorf("lock fail, error:%+v", err)
+		log.ErrLogger.Printf("lock fail, error:%+v", err)
 		InitEntry()
 		return err
-	} 
+	}
 	defer zookeeper.DeleteNode(lockPath)
 	time.Sleep(500 * time.Millisecond)
 	consistent_hash.InitIPMd5List()
 	tasks, err := mongodb.SearchTask(ctx, bson.D{})
 	if err != nil {
-		log.Errorf("search task fail, %+v", err)
+		log.ErrLogger.Printf("search task fail, %+v", err)
 		InitEntry()
 		return err
 	}
 	for i, t := range tasks {
 		taskMd5, err := consistent_hash.HashCalculation(t.TaskID)
 		if err != nil {
-			log.Errorf("task id hash calculation fail task_id:%s, error:%+v", t.TaskID, err)
+			log.ErrLogger.Printf("task id hash calculation fail task_id:%s, error:%+v", t.TaskID, err)
 			InitEntry()
 			return err
 		}
 		if tool.IP == consistent_hash.SelectIP(taskMd5) && !TaskExists(t.TaskID) {
-			log.Infof("init entries, create index:%d, task:%+v", i, t)
+			log.InfoLogger.Printf("init entries, create index:%d, task:%+v", i, t)
 			CreateTask(t)
 		}
 		if tool.IP != consistent_hash.SelectIP(taskMd5) && TaskExists(t.TaskID) {
-			log.Infof("init entries, delete index:%d, task:%+v", i, t)
+			log.InfoLogger.Printf("init entries, delete index:%d, task:%+v", i, t)
 			DeleteTask(t)
 		}
 	}
@@ -159,9 +159,9 @@ func executeTask(ctx context.Context) {
 			}
 			id, err := mongodb.InsertOneSchedule(ctx, s)
 			if err != nil {
-				log.Errorf("insert schedule into mongo fail, schedule:%+v, task:%+v, error:%+v", s, entry.Task, err)
+				log.ErrLogger.Printf("insert schedule into mongo fail, schedule:%+v, task:%+v, error:%+v", s, entry.Task, err)
 			} else {
-				log.Infof("scheduleID:%+v", id)
+				log.InfoLogger.Printf("scheduleID:%+v", id)
 			}
 
 		}
@@ -177,7 +177,7 @@ func doExecute(ctx context.Context, task data_schema.TaskInfo) {
 func doCreate(ctx context.Context, task data_schema.TaskInfo) {
 	s, err := cron.Parse(task.CronInfo)
 	if err != nil {
-		log.Errorf("parse task cron info fail, taskID:%d, cronInfo:%s, error:%+v", task.TaskID, task.CronInfo, err)
+		log.ErrLogger.Printf("parse task cron info fail, taskID:%d, cronInfo:%s, error:%+v", task.TaskID, task.CronInfo, err)
 		return
 	}
 	e := data_schema.Entry{
@@ -195,7 +195,7 @@ func doUpdate(ctx context.Context, task data_schema.TaskInfo) error {
 		if t.Task.TaskID == task.TaskID {
 			s, err := cron.Parse(task.CronInfo)
 			if err != nil {
-				log.Errorf("parse cron info fail, error:%+v, cron info:%s", err, task.CronInfo)
+				log.ErrLogger.Printf("parse cron info fail, error:%+v, cron info:%s", err, task.CronInfo)
 				return err
 			}
 			sd.Entries[i].Next = s.Next(time.Now())
@@ -204,7 +204,7 @@ func doUpdate(ctx context.Context, task data_schema.TaskInfo) error {
 			sd.Entries[i].Task = task
 		}
 	}
-	log.Errorf("[doUpdate]cannt find the task:%+v", task)
+	log.ErrLogger.Printf("[doUpdate]cannt find the task:%+v", task)
 	return fmt.Errorf("cannt find the task")
 }
 
@@ -216,7 +216,7 @@ func doDelete(ctx context.Context, task data_schema.TaskInfo) error {
 		}
 	}
 	if index == -1 {
-		log.Errorf("[doDelete]cannt find the task:%+v", task)
+		log.ErrLogger.Printf("[doDelete]cannt find the task:%+v", task)
 		return fmt.Errorf("cannt find the task")
 	}
 	ScheLock()
@@ -239,7 +239,7 @@ func ClusterChange(ctx context.Context, c <-chan zk.Event) {
 	case <-c:
 		_, wchan, err := zookeeper.ChildrenWatch("/go_schedule/schedule")
 		if err != nil {
-			log.Errorf("wathch cluster node fail, error:%+v", err)
+			log.ErrLogger.Printf("wathch cluster node fail, error:%+v", err)
 		} else {
 			go ClusterChange(ctx, wchan)
 		}

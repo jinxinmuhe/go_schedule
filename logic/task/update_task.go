@@ -25,7 +25,7 @@ import (
 func UpdateTask(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTaskResp, error) {
 	resp := pb.UpdateTaskResp{}
 	if list, err := zookeeper.ChildrenNodes(consts.ZKLockPath); err != nil || len(list) > 0 {
-		log.Errorf("initializing schedule entries")
+		log.ErrLogger.Printf("initializing schedule entries")
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "initializing schedule entries"
 		return &resp, err
@@ -37,7 +37,7 @@ func UpdateTask(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTaskResp,
 	}
 
 	if isvalid, err := paramValidUpdate(ctx, req); !isvalid {
-		log.Errorf("parameters is invalid, request:%+v, error:%+v", *req, err)
+		log.ErrLogger.Printf("parameters is invalid, request:%+v, error:%+v", *req, err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "parameter is invalid"
 		return &resp, err
@@ -45,7 +45,7 @@ func UpdateTask(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTaskResp,
 	schedule.ScheLock()
 	defer schedule.ScheUnLock()
 	if schedule.LenUpdateChan() >= config.Viper.GetInt("schedule.update_size") {
-		log.Errorf("update task too frequency")
+		log.ErrLogger.Printf("update task too frequency")
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "parameter is invalid"
 		return &resp, fmt.Errorf("update task too frequency")
@@ -64,12 +64,12 @@ func UpdateTask(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTaskResp,
 	// 更新db
 	filter := bson.D{{"task_id", req.GetTaskId()}}
 	if _, err := mongodb.UpdateOneTask(ctx, filter, taskB); err != nil {
-		log.Errorf("update task fail, write mongodb fail, task:%+v, error:%+v", taskB, err)
+		log.ErrLogger.Printf("update task fail, write mongodb fail, task:%+v, error:%+v", taskB, err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "write mongodb fail"
 		return &resp, err
 	}
-	log.Infof("write mongodb succ, taskID:%s", req.GetTaskId())
+	log.InfoLogger.Printf("write mongodb succ, taskID:%s", req.GetTaskId())
 
 	task := data_schema.TaskInfo{
 		TaskID:     req.GetTaskId(),
@@ -93,7 +93,7 @@ func paramValidUpdate(ctx context.Context, req *pb.UpdateTaskReq) (bool, error) 
 
 	_, err := cron.Parse(req.ScheduleTime)
 	if err != nil {
-		log.Errorf("schedule time is illegal, taskInfo:%+v, error:%+v", *req, err)
+		log.ErrLogger.Printf("schedule time is illegal, taskInfo:%+v, error:%+v", *req, err)
 		return false, err
 	}
 
@@ -105,7 +105,7 @@ func redirectUpdateReq(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTa
 	// path := fmt.Sprintf("/go_schedule/task/%s", req.GetTaskId())
 	// ipByte, err := zookeeper.GetData(path)
 	// if err != nil {
-	// 	log.Errorf("update task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
+	// 	log.ErrLogger.Printf("update task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
 	// 	resp.Code = pb.RespCode_FAIL
 	// 	resp.Msg = "update task fail"
 	// 	return &resp, err
@@ -113,20 +113,20 @@ func redirectUpdateReq(ctx context.Context, req *pb.UpdateTaskReq) (*pb.UpdateTa
 
 	taskMd5, err := consistent_hash.HashCalculation(req.GetTaskId())
 	if err != nil {
-		log.Errorf("update task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
+		log.ErrLogger.Printf("update task %s fail, cannt find the specific ip, detail msg:%+v", req.GetTaskId(), err)
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "update task fail"
 		return &resp, err
 	}
 	ip := consistent_hash.SelectIP(taskMd5)
 	if ip == "" {
-		log.Errorf("update task %s fail, the found ip is empty", req.GetTaskId())
+		log.ErrLogger.Printf("update task %s fail, the found ip is empty", req.GetTaskId())
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "update task fail"
 		return &resp, fmt.Errorf("ip is empty")
 	}
 	if ip == tool.IP {
-		log.Errorf("update task %s fail, the ip registered in zk is same with current node", req.GetTaskId())
+		log.ErrLogger.Printf("update task %s fail, the ip registered in zk is same with current node", req.GetTaskId())
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "update task fail"
 		return &resp, err

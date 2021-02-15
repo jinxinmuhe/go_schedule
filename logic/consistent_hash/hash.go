@@ -14,7 +14,7 @@ var IPMd5 map[uint32]string
 func HashCalculation(key string) (uint32, error) {
 	hash := md5.New()
 	if _, err := hash.Write([]byte(key)); err != nil {
-		log.Errorf("hash write fail, key:%s, error:%+v", key, err)
+		log.ErrLogger.Printf("hash write fail, key:%s, error:%+v", key, err)
 		return 0, err
 	}
 	result := hash.Sum(nil)
@@ -45,7 +45,7 @@ func InitIPMd5List() error {
 	basicPath := "/go_schedule/schedule"
 	list, err := zookeeper.ChildrenNodes(basicPath)
 	if err != nil {
-		log.Errorf("children nodes fail, error:%+v", err)
+		log.ErrLogger.Printf("children nodes fail, error:%+v", err)
 		return err
 	}
 
