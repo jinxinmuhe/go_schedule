@@ -22,7 +22,7 @@ import (
 // DeleteTask 创建任务
 func DeleteTask(ctx context.Context, req *pb.DeleteTaskReq) (*pb.DeleteTaskResp, error) {
 	resp := pb.DeleteTaskResp{}
-	if isExists, err := zookeeper.ExistNode(consts.ZKLockPath); err != nil || isExists {
+	if list, err := zookeeper.ChildrenNodes(consts.ZKLockPath); err != nil || len(list) > 0 {
 		log.Errorf("initializing schedule entries")
 		resp.Code = pb.RespCode_FAIL
 		resp.Msg = "initializing schedule entries"

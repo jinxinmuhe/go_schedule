@@ -42,15 +42,13 @@ func InitSchedule(ctx context.Context) error {
 }
 
 func doInitEntries(ctx context.Context) error {
-	_, err := zookeeper.CreateTemplateNode(consts.ZKLockPath, nil)
-	if err != nil && err != zk.ErrNodeExists {
+	lockPath := fmt.Sprintf("%s/%s", consts.ZKLockPath, tool.IP)
+	if _, err := zookeeper.CreateTemplateNode(lockPath, nil); err != nil {
 		log.Errorf("lock fail, error:%+v", err)
 		InitEntry()
 		return err
 	} 
-	if err == zk.ErrNodeExists {
-		defer zookeeper.DeleteNode(consts.ZKLockPath)
-	}
+	defer zookeeper.DeleteNode(lockPath)
 	time.Sleep(500 * time.Millisecond)
 	consistent_hash.InitIPMd5List()
 	tasks, err := mongodb.SearchTask(ctx, bson.D{})

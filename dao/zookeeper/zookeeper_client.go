@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go_schedule/util/config"
+	"go_schedule/util/consts"
 	"go_schedule/util/log"
 	"go_schedule/util/tool"
 
@@ -28,6 +29,16 @@ func InitZookeeper() error {
 		return err
 	} else if !exist {
 		if _, err := CreateNode("/go_schedule", nil); err != nil {
+			log.Errorf("init zookeeper error:%+v", err)
+			return err
+		}
+	}
+
+	if exist, err := ExistNode(consts.ZKLockPath); err != nil {
+		log.Errorf("init zookeeper error:%+v", err)
+		return err
+	} else if !exist {
+		if _, err := CreateNode(consts.ZKLockPath, nil); err != nil {
 			log.Errorf("init zookeeper error:%+v", err)
 			return err
 		}
