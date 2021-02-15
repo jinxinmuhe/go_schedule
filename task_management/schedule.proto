@@ -1,0 +1,95 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+option go_package = "go_schedule/task_management";
+
+package task_management;
+
+service TaskManagement {
+  rpc CreateTask (CreateTaskReq) returns (CreateTaskResp) {}
+  rpc UpdateTask (UpdateTaskReq) returns (UpdateTaskResp) {}
+  rpc DeleteTask (DeleteTaskReq) returns (DeleteTaskResp) {}
+  rpc SearchTask (SearchTaskReq) returns (SearchTaskResp) {}
+}
+
+enum RespCode {
+	UNKNOWN = 0;
+	SUCC = 1;
+	FAIL = 2;
+}
+
+message CreateTaskReq {
+  string task_name = 1;
+  string schedule_time = 2;
+  string kafka_topic = 3;
+  string alarm_email = 4;
+  string owner = 5;
+  string task_id = 6;
+  string env_variable = 20;
+}
+
+message CreateTaskResp {
+  string task_id = 1;
+  RespCode code = 2;
+  string msg = 3;
+}
+
+message UpdateTaskReq {
+    string task_id = 1;
+    string name = 2;
+    string schedule_time = 3;
+    string kafka_topic = 4;
+    string alarm_email = 5;
+    string owner = 6;
+    string env_variable = 20;
+}
+
+message UpdateTaskResp {
+	RespCode code = 1;
+	string msg = 2;
+}
+
+message DeleteTaskReq {
+    string task_id = 1;
+}
+
+message DeleteTaskResp {
+    string task_id = 1;
+    RespCode code = 2;
+    string msg = 3;
+}
+
+message SearchTaskReq {
+    string task_id = 1;
+    string kafka_topic = 2;
+    string owner = 3;
+}
+
+message TaskInfo {
+    string task_id = 1;
+    string task_name = 2;
+    string schedule_time = 3;
+    string kafka_topic = 4;
+    string alarm_email = 5;
+    string owner = 6;
+    string env_variable = 20;
+}
+
+message SearchTaskResp {
+    repeated TaskInfo tasks = 1;
+    RespCode code = 2;
+    string msg = 3;
+}

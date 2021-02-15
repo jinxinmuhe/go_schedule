@@ -1,0 +1,16 @@
+port = 12343
+
+[mongodb]
+conn = "mongodb://jasonjinxin:didi_123@10.96.93.199:27018/runoob?compressors=disabled&gssapiServiceName=mongodb"
+conn_timeout = 3
+timeout = 3
+database = "go_schedule"
+
+[zookeeper]
+hosts = ["10.96.93.199:2183"]
+timeout = 5
+
+[schedule]
+create_size = 10
+update_size = 10
+delete_size = 10
