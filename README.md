@@ -15,7 +15,7 @@
 ## 模块介绍
  包 | 功能 
  --- | --- 
- logic/consistent_hash | 一致性哈希算法，包括哈希值计算，节点IP获取等功能
+ logic/consistent_hash | 一致性哈希算法，包括哈希值计算，节点IP获取
  logic/execute | 任务执行部分，设想是通过接口或者mq通知下游，本服务不负责具体执行
  logic/schedule | 调度部分，负责管理当前节点的所有任务，每个任务下次执行时间的计算以及执行
  logic/task | 对外接口，提供增删改查能力
